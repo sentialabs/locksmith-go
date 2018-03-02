@@ -166,7 +166,9 @@ func main() {
 		return
 	}
 
-	svc := sts.New(session.New())
+	svc := sts.New(session.Must(session.NewSessionWithOptions(session.Options{
+		Profile: "locksmith",
+	})))
 	input := &sts.AssumeRoleInput{
 		DurationSeconds: aws.Int64(3600),
 		RoleArn: aws.String(fmt.Sprintf(
