@@ -3,7 +3,7 @@
 Configure your `~/.aws/credentials` with your AWS and Beagle credentials:
 
 ```
-[default]
+[locksmith]
 aws_access_key_id = AKIAXXXXXXXXXXXXXXXX
 aws_secret_access_key = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 mfa_serial = XXXXXXXXXXXXXXXXXXXXXXX

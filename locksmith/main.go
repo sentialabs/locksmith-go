@@ -68,9 +68,9 @@ func main() {
 		log.Fatal("ini.InsensitiveLoad: ", err)
 		return
 	}
-	mfa_serial := cfg.Section("default").Key("mfa_serial").String()
-	url := cfg.Section("default").Key("beagle_url").String()
-	pass := cfg.Section("default").Key("beagle_pass").String()
+	mfa_serial := cfg.Section("locksmith").Key("mfa_serial").String()
+	url := cfg.Section("locksmith").Key("beagle_url").String()
+	pass := cfg.Section("locksmith").Key("beagle_pass").String()
 
 	fmt.Printf("Locksmith GO\n")
 
@@ -166,7 +166,9 @@ func main() {
 		return
 	}
 
-	svc := sts.New(session.New())
+	svc := sts.New(session.Must(session.NewSessionWithOptions(session.Options{
+		Profile: "locksmith",
+	})))
 	input := &sts.AssumeRoleInput{
 		DurationSeconds: aws.Int64(3600),
 		RoleArn: aws.String(fmt.Sprintf(
