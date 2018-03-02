@@ -11,7 +11,9 @@ beagle_url = https://beagle.sentiampc.com/api/v1/bookmarks
 beagle_pass = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
-Install:
+# Install:
+
+Download one of the binaries, or install directly:
 
 ```
 export GOPATH=~/go
@@ -21,3 +23,8 @@ go get -u github.com/sentialabs/locksmith-go/locksmith
 ```
 
 Now, add `~/go/bin` to your path. And start `locksmith`!
+
+# Building a Release
+```
+make
+```
