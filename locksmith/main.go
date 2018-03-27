@@ -63,16 +63,32 @@ func warn(txt string) string {
 	return fmt.Sprintf("%s%dm%s%s0m", esc, 91, txt, esc)
 }
 
+// Version number
+var Version string
+
+// Build (git hash)
+var Build string
+
+func version() {
+	fmt.Printf("Locksmith %s (%s)", Version, Build)
+	os.Exit(0)
+}
+
 func main() {
 	inceptionPtr := flag.Bool("inception", false, "allow locksmith in locksmith")
+	versionPtr := flag.Bool("version", false, "show version")
 	flag.Parse()
+
+	if *versionPtr {
+		version()
+	}
 
 	if !*inceptionPtr && len(os.Getenv("AWS_SESSION_EXPIRES")) > 0 {
 		fmt.Println(
 			warn("Warning: ") +
 				"You are running Locksmith from a shell that was spawned " +
 				"from Locksmith itself. This is probably not wat you want, exit this " +
-				"shell and start run Locksmith again. If you indeed intended to run " +
+				"shell and start Locksmith again. If you indeed intended to run " +
 				"locksmith using the currently assumed role, please use the " +
 				"--inception argument.")
 		os.Exit(41)
