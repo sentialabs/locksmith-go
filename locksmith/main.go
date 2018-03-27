@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -21,6 +22,8 @@ import (
 	"gopkg.in/ini.v1"
 	"gopkg.in/mattes/go-expand-tilde.v1"
 )
+
+const esc = "\033["
 
 type Bookmarks struct {
 	Links struct {
@@ -56,7 +59,25 @@ type Bookmarks struct {
 	TotalPages int `json:"total_pages"`
 }
 
+func warn(txt string) string {
+	return fmt.Sprintf("%s%dm%s%s0m", esc, 91, txt, esc)
+}
+
 func main() {
+	inceptionPtr := flag.Bool("inception", false, "allow locksmith in locksmith")
+	flag.Parse()
+
+	if !*inceptionPtr && len(os.Getenv("AWS_SESSION_EXPIRES")) > 0 {
+		fmt.Println(
+			warn("Warning: ") +
+				"You are running Locksmith from a shell that was spawned " +
+				"from Locksmith itself. This is probably not wat you want, exit this " +
+				"shell and start run Locksmith again. If you indeed intended to run " +
+				"locksmith using the currently assumed role, please use the " +
+				"--inception argument.")
+		os.Exit(41)
+	}
+
 	path, err := tilde.Expand("~/.aws/credentials")
 	if err != nil {
 		log.Fatal("tilde.Expand: ", err)
@@ -68,7 +89,7 @@ func main() {
 		log.Fatal("ini.InsensitiveLoad: ", err)
 		return
 	}
-	mfa_serial := cfg.Section("locksmith").Key("mfa_serial").String()
+	mfaSerial := cfg.Section("locksmith").Key("mfa_serial").String()
 	url := cfg.Section("locksmith").Key("beagle_url").String()
 	pass := cfg.Section("locksmith").Key("beagle_pass").String()
 
@@ -176,7 +197,7 @@ func main() {
 			record.Bookmarks[result].AccountNumber,
 			record.Bookmarks[result].RoleName)),
 		RoleSessionName: aws.String("AssumeRoleSession"),
-		SerialNumber:    aws.String(mfa_serial),
+		SerialNumber:    aws.String(mfaSerial),
 		TokenCode:       aws.String(token),
 	}
 
