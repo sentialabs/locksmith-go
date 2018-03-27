@@ -87,10 +87,10 @@ func main() {
 		fmt.Println(
 			warn("Warning: ") +
 				"You are running Locksmith from a shell that was spawned " +
-				"from Locksmith itself. This is probably not wat you want, exit this " +
-				"shell and start Locksmith again. If you indeed intended to run " +
-				"locksmith using the currently assumed role, please use the " +
-				"--inception argument.")
+				"from Locksmith itself. This is probably not what you want, exit " +
+				"this shell and start Locksmith again. If you indeed intended to run " +
+				"Locksmith using the currently assumed role, please use the " +
+				"-inception argument.")
 		os.Exit(41)
 	}
 
