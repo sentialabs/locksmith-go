@@ -1,8 +1,10 @@
-VERSION=0.0.1
-GOPATH=$(CURDIR)
+VERSION=0.0.2
+BUILD=$(shell git rev-parse --short HEAD)
 MODULE=locksmith
 BIN=bin
 DIST=dist
+GOPATH=$(CURDIR)
+GOBIN=$(GOPATH)/$(BIN)
 
 _TARGETS=\
 	darwin-386 \
@@ -18,6 +20,9 @@ TARGET_ZIPS=$(patsubst %,$(DIST)/$(MODULE)-%-$(VERSION).zip,$(_TARGETS))
 
 default: $(TARGET_ZIPS)
 
+depend:
+	go get ./...
+
 clean:
 	rm -rf $(BIN) $(DIST)
 
@@ -31,7 +36,10 @@ $(BIN)/$(MODULE)-%: $(MODULE)/*.go
 	os_arch=$${name#*-}; \
 	os=$${os_arch%%-*}; \
 	arch=$${os_arch##*-}; \
-	GOOS=$$os GOARCH=$$arch go build -o $@ ./$$module
+	GOOS=$$os GOARCH=$$arch \
+	go build \
+		-ldflags "-X=main.Version=$(VERSION) -X=main.Build=$(BUILD)" \
+		-o $@ ./$$module
 
 .PHONY: default
 .SECONDARY: $(TARGET_BINS)
