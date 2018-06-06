@@ -238,7 +238,12 @@ func main() {
 		return
 	}
 
-	shell := user_shell.GetUserShell()
+	shell := os.Getenv("LOCKSMITH_SHELL")
+
+	if len(shell) == 0 {
+		shell = user_shell.GetUserShell()
+	}
+
 	cmd := exec.Command(shell, "-l")
 	cmd.Env = append(os.Environ(),
 		fmt.Sprintf("AWS_ACCESS_KEY_ID=%s", aws.StringValue(assumedRole.Credentials.AccessKeyId)),

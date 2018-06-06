@@ -1,4 +1,4 @@
-VERSION=0.0.2
+VERSION=0.0.3
 BUILD=$(shell git rev-parse --short HEAD)
 MODULE=locksmith
 BIN=bin
@@ -15,6 +15,12 @@ _TARGETS=\
 	linux-arm64 \
 	windows-386 \
 	windows-amd64
+
+	# android-386 \
+	# android-amd64 \
+	# android-arm \
+	# android-arm64 \
+
 TARGET_BINS=$(patsubst %,$(BIN)/$(MODULE)-%,$(_TARGETS))
 TARGET_ZIPS=$(patsubst %,$(DIST)/$(MODULE)-%-$(VERSION).zip,$(_TARGETS))
 
