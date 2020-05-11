@@ -3,8 +3,8 @@ BUILD=$(shell git rev-parse --short HEAD)
 MODULE=locksmith
 BIN=bin
 DIST=dist
-GOPATH=$(CURDIR)
-GOBIN=$(GOPATH)/$(BIN)
+export GOPATH=$(CURDIR)
+export GOBIN=$(GOPATH)/$(BIN)
 
 _TARGETS=\
 	darwin-386 \
