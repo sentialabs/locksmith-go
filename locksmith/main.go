@@ -278,6 +278,10 @@ func main() {
 
 	// Get venv setting
 	venv := os.Getenv("LOCKSMITH_VENV")
+
+	if len(venv) == 0 {
+		venv = context.Context.VirtualEnv
+	}
 	var cmd = exec.Command(shell, "-l")
 
 	if len(venv) != 0 {
