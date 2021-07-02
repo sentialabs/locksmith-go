@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -17,10 +18,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sts"
-	"github.com/captainsafia/go-user-shell"
+	user_shell "github.com/captainsafia/go-user-shell"
 	"github.com/manifoldco/promptui"
 	"gopkg.in/ini.v1"
-	"gopkg.in/mattes/go-expand-tilde.v1"
+	tilde "gopkg.in/mattes/go-expand-tilde.v1"
 )
 
 const esc = "\033["
@@ -57,6 +58,15 @@ type Bookmarks struct {
 	} `json:"bookmarks"`
 	TotalCount int `json:"total_count"`
 	TotalPages int `json:"total_pages"`
+}
+type Context struct {
+	Context struct {
+		Environments []struct {
+			AccountNumber string `json:"account"`
+			Name          string `json:"name"`
+		} `json:"environments"`
+		VirtualEnv string `json:"venv"`
+	} `json:"context"`
 }
 
 func warn(txt string) string {
@@ -138,9 +148,30 @@ func main() {
 	if err := json.NewDecoder(resp.Body).Decode(&record); err != nil {
 		log.Println(err)
 	}
+	jsonFile, err := os.Open("cdk.json")
+	var records = record.Bookmarks
+	if err == nil {
+		fmt.Println("Imported project context")
+		records = record.Bookmarks[:0]
+	} else {
 
-	sort.Slice(record.Bookmarks, func(i, j int) bool {
-		return record.Bookmarks[i].Name < record.Bookmarks[j].Name
+	}
+	defer jsonFile.Close()
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	var context Context
+	json.Unmarshal(byteValue, &context)
+
+	for _, account := range record.Bookmarks {
+		for _, v := range context.Context.Environments {
+			if account.AccountNumber == v.AccountNumber {
+				fmt.Printf("Gevonden!")
+				records = append(records, account)
+			}
+		}
+	}
+
+	sort.Slice(records, func(i, j int) bool {
+		return records[i].Name < records[j].Name
 	})
 
 	templates := &promptui.SelectTemplates{
@@ -156,7 +187,7 @@ func main() {
 	}
 
 	searcher := func(input string, index int) bool {
-		bookmark := record.Bookmarks[index]
+		bookmark := records[index]
 		name := strings.Replace(strings.ToLower(bookmark.Name), " ", "", -1)
 		input = strings.Replace(strings.ToLower(input), " ", "", -1)
 		name += bookmark.AccountNumber
@@ -166,7 +197,7 @@ func main() {
 
 	prompt := promptui.Select{
 		Label:     "AWS Account",
-		Items:     record.Bookmarks,
+		Items:     records,
 		Templates: templates,
 		Size:      10,
 		Searcher:  searcher,
@@ -210,8 +241,8 @@ func main() {
 		DurationSeconds: aws.Int64(3600),
 		RoleArn: aws.String(fmt.Sprintf(
 			"arn:aws:iam::%s:role/%s",
-			record.Bookmarks[result].AccountNumber,
-			record.Bookmarks[result].RoleName)),
+			records[result].AccountNumber,
+			records[result].RoleName)),
 		RoleSessionName: aws.String("AssumeRoleSession"),
 		SerialNumber:    aws.String(mfaSerial),
 		TokenCode:       aws.String(token),
@@ -238,20 +269,29 @@ func main() {
 		return
 	}
 
+	// Get preferred shell from env var
 	shell := os.Getenv("LOCKSMITH_SHELL")
 
 	if len(shell) == 0 {
 		shell = user_shell.GetUserShell()
 	}
 
-	cmd := exec.Command(shell, "-l")
+	// Get venv setting
+	venv := os.Getenv("LOCKSMITH_VENV")
+	var cmd = exec.Command(shell, "-l")
+
+	if len(venv) != 0 {
+		cmd = exec.Command("bash", "--init-file", venv+"/bin/activate")
+	}
+
 	cmd.Env = append(os.Environ(),
+		fmt.Sprintf("PS1=%s $ ", "\\[\\e[31m\\]"+records[result].AccountNumber+"\\[\\e[m\\]: \\[\\e[33m\\]"+records[result].Name+" \\[\\e[31m\\]\\w\\[\\e[m\\]"),
 		fmt.Sprintf("AWS_ACCESS_KEY_ID=%s", aws.StringValue(assumedRole.Credentials.AccessKeyId)),
 		fmt.Sprintf("AWS_ASSUMED_ROLE_ARN=%s", aws.StringValue(input.RoleArn)),
 		fmt.Sprintf("AWS_SECRET_ACCESS_KEY=%s", aws.StringValue(assumedRole.Credentials.SecretAccessKey)),
 		fmt.Sprintf("AWS_SECURITY_TOKEN=%s", aws.StringValue(assumedRole.Credentials.SessionToken)),
-		fmt.Sprintf("AWS_SESSION_ACCOUNT_ID=%s", record.Bookmarks[result].AccountNumber),
-		fmt.Sprintf("AWS_SESSION_ACCOUNT_NAME=%s", record.Bookmarks[result].Name),
+		fmt.Sprintf("AWS_SESSION_ACCOUNT_ID=%s", records[result].AccountNumber),
+		fmt.Sprintf("AWS_SESSION_ACCOUNT_NAME=%s", records[result].Name),
 		fmt.Sprintf("AWS_SESSION_EXPIRES=%d", aws.TimeValue(assumedRole.Credentials.Expiration).Unix()),
 		fmt.Sprintf("AWS_SESSION_TOKEN=%s", aws.StringValue(assumedRole.Credentials.SessionToken)),
 		fmt.Sprintf("AWS_SESSION_USER_ARN=%s", aws.StringValue(assumedRole.AssumedRoleUser.Arn)),

@@ -7,13 +7,10 @@ GOPATH=$(CURDIR)
 GOBIN=$(GOPATH)/$(BIN)
 
 _TARGETS=\
-	darwin-386 \
-	darwin-amd64 \
-	linux-386 \
+	darwin-amd64
 	linux-amd64 \
 	linux-arm \
 	linux-arm64 \
-	windows-386 \
 	windows-amd64
 
 	# android-386 \
