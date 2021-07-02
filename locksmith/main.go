@@ -79,6 +79,8 @@ var Version string
 // Build (git hash)
 var Build string
 
+var ps1 string
+
 func version() {
 	fmt.Printf("Locksmith %s (%s)", Version, Build)
 	os.Exit(0)
@@ -282,14 +284,26 @@ func main() {
 	if len(venv) == 0 {
 		venv = context.Context.VirtualEnv
 	}
-	var cmd = exec.Command(shell, "-l")
 
+	// Set prompt
+	cmd := exec.Command(shell, "-l")
+	if strings.HasSuffix(shell, "zsh") {
+		cmd = exec.Command(shell, "-d")
+		ps1 = "PROMPT=%F{red}" + records[result].AccountNumber + "%f: %F{yellow}" + records[result].Name + " %f%F{red}%d%f %# "
+	}
+	if strings.HasSuffix(shell, "bash") {
+		cmd = exec.Command(shell)
+		ps1 = "PS1=\\[\\e[31m\\]" + records[result].AccountNumber + "\\[\\e[m\\]: \\[\\e[33m\\]" + records[result].Name + " \\[\\e[31m\\]\\w\\[\\e[m\\] $ "
+	}
+
+	// Set venv (bash only), sets ps1 because running from zsh does not set ps1 to bash variant.
 	if len(venv) != 0 {
+		ps1 = "PS1=\\[\\e[31m\\]" + records[result].AccountNumber + "\\[\\e[m\\]: \\[\\e[33m\\]" + records[result].Name + " \\[\\e[31m\\]\\w\\[\\e[m\\] $ "
 		cmd = exec.Command("bash", "--init-file", venv+"/bin/activate")
 	}
 
 	cmd.Env = append(os.Environ(),
-		fmt.Sprintf("PS1=%s $ ", "\\[\\e[31m\\]"+records[result].AccountNumber+"\\[\\e[m\\]: \\[\\e[33m\\]"+records[result].Name+" \\[\\e[31m\\]\\w\\[\\e[m\\]"),
+		ps1,
 		fmt.Sprintf("AWS_ACCESS_KEY_ID=%s", aws.StringValue(assumedRole.Credentials.AccessKeyId)),
 		fmt.Sprintf("AWS_ASSUMED_ROLE_ARN=%s", aws.StringValue(input.RoleArn)),
 		fmt.Sprintf("AWS_SECRET_ACCESS_KEY=%s", aws.StringValue(assumedRole.Credentials.SecretAccessKey)),
