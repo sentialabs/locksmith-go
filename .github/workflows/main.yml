@@ -1,12 +1,12 @@
--  name: locksmith
-   on:
-     release:
-       types: [published]
+name: locksmith
+on:
+  release:
+    types: [published]
 
-   jobs:
-    build:
-      runs-on: ubuntu-latest
-      steps:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
       - name: checkout repo
         uses: actions/checkout@v2
       - name: build application
