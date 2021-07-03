@@ -11,3 +11,9 @@ jobs:
         uses: actions/checkout@v2
       - name: build application
         run: make
+      - name: release application
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: dist/locksmith-*.zip
+          tag: ${{ github.ref }}
