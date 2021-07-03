@@ -1,5 +1,5 @@
-VERSION=0.0.3
 BUILD=$(shell git rev-parse --short HEAD)
+VERSION=$(shell git tag --points-at=$(BUILD); [ -z $$(git tag --points-at=$(BUILD)) ] && git branch --show-current | sed 's/\//_/g' )
 MODULE=locksmith
 BIN=bin
 DIST=dist
@@ -16,13 +16,23 @@ _TARGETS=\
 TARGET_BINS=$(patsubst %,$(BIN)/$(MODULE)-%,$(_TARGETS))
 TARGET_ZIPS=$(patsubst %,$(DIST)/$(MODULE)-%-$(VERSION).zip,$(_TARGETS))
 
-default: $(TARGET_ZIPS)
+default: clean depend info build
+
+clean:
+	go clean
+	rm -rf $(BIN) $(DIST)
 
 depend:
 	go get ./...
 
-clean:
-	rm -rf $(BIN) $(DIST)
+info: 
+	@echo Version: $(VERSION)
+	@echo Build: $(BUILD)
+
+build: $(TARGET_ZIPS)
+
+install:
+	go install ./...
 
 $(DIST)/%-$(VERSION).zip: $(BIN)/%
 	@mkdir -p $(@D)
