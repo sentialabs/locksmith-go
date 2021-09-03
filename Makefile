@@ -3,8 +3,8 @@ VERSION=$(shell git tag --points-at=$(BUILD); [ -z $$(git tag --points-at=$(BUIL
 MODULE=locksmith
 BIN=bin
 DIST=dist
-GOPATH=$(CURDIR)
-GOBIN=$(GOPATH)/$(BIN)
+export GOPATH=$(CURDIR)
+export GOBIN=$(GOPATH)/$(BIN)
 
 _TARGETS=\
 	darwin-amd64 \
